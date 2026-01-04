@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meus Agendamentos</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f2f2f2;
+    padding: 15px;
+}
+
+h1, h2 {
+    text-align: center;
+}
+
+form, .card, .consulta {
+    background: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+label {
+    font-weight: bold;
+    display: block;
+    margin-top: 10px;
+}
+
+input, select, button {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+}
+
+button {
+    background: #28a745;
+    color: white;
+    border: none;
+    margin-top: 15px;
+    border-radius: 5px;
+}
+
+.apagar {
+    background: #dc3545;
+    margin-top: 10px;
+}
+
+.consulta input {
+    margin-bottom: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>📅 Meus Agendamentos</h1>
+
+<form id="form">
+    <label>Tipo de Serviço</label>
+    <select id="servico" required>
+        <option value="">Selecione</option>
+        <option>Instalação Elétrica</option>
+        <option>Manutenção</option>
+        <option>Poda de Árvore</option>
+        <option>Outro</option>
+    </select>
+
+    <label>Valor (R$)</label>
+    <input type="number" id="valor" required>
+
+    <label>Cliente</label>
+    <input type="text" id="cliente" required>
+
+    <label>Endereço</label>
+    <input type="text" id="endereco" required>
+
+    <label>Telefone</label>
+    <input type="tel" id="telefone" required>
+
+    <label>Localização</label>
+    <input type="text" id="localizacao" readonly>
+
+    <button type="button" onclick="localizar()">📍 Pegar Localização</button>
+    <button type="submit">Salvar Agendamento</button>
+</form>
+
+<div class="consulta">
+    <h2>🔍 Consultar Serviços</h2>
+    <input type="text" id="busca" placeholder="Buscar por cliente, serviço ou endereço" onkeyup="consultar()">
+</div>
+
+<div id="lista"></div>
+
+<script>
+let agendamentos = JSON.parse(localStorage.getItem("agendamentos")) || [];
+
+function salvarLocal() {
+    localStorage.setItem("agendamentos", JSON.stringify(agendamentos));
+}
+
+function renderizar(filtro = "") {
+    lista.innerHTML = "";
+    agendamentos
+        .filter(a =>
+            a.cliente.toLowerCase().includes(filtro) ||
+            a.servico.toLowerCase().includes(filtro) ||
+            a.endereco.toLowerCase().includes(filtro)
+        )
+        .forEach((a, i) => {
+        lista.innerHTML += `
+        <div class="card">
+            <strong>Serviço:</strong> ${a.servico}<br>
+            <strong>Valor:</strong> R$ ${a.valor}<br>
+            <strong>Cliente:</strong> ${a.cliente}<br>
+            <strong>Endereço:</strong> ${a.endereco}<br>
+            <strong>Telefone:</strong> ${a.telefone}<br>
+            <strong>Localização:</strong> ${a.localizacao}<br>
+            <button class="apagar" onclick="apagar(${i})">Apagar</button>
+        </div>`;
+    });
+}
+
+function apagar(i) {
+    agendamentos.splice(i, 1);
+    salvarLocal();
+    renderizar();
+}
+
+document.getElementById("form").addEventListener("submit", e => {
+    e.preventDefault();
+
+    const novo = {
+        servico: servico.value,
+        valor: valor.value,
+        cliente: cliente.value,
+        endereco: endereco.value,
+        telefone: telefone.value,
+        localizacao: localizacao.value
+    };
+
+    agendamentos.push(novo);
+    salvarLocal();
+    renderizar();
+    e.target.reset();
+});
+
+function localizar() {
+    navigator.geolocation.getCurrentPosition(pos => {
+        localizacao.value =
+        `Lat ${pos.coords.latitude.toFixed(5)}, Lon ${pos.coords.longitude.toFixed(5)}`;
+    });
+}
+
+function consultar() {
+    const filtro = busca.value.toLowerCase();
+    renderizar(filtro);
+}
+
+renderizar();
+</script>
+
+</body>
+</html>
